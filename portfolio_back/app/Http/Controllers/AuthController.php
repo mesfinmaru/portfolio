@@ -2,14 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    private function adminEmail(): string
+    {
+        return env('PORTFOLIO_ADMIN_EMAIL', 'admin@portfolio.com');
+    }
+
+    private function adminPassword(): string
+    {
+        return env('PORTFOLIO_ADMIN_PASSWORD', 'admin123');
+    }
+
+    private function adminToken(): string
+    {
+        return hash_hmac('sha256', $this->adminEmail(), config('app.key'));
+    }
+
     /**
      * POST /api/auth/login
      * Body: { "email": "...", "password": "..." }
@@ -18,34 +30,26 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Invalid credentials.'],
-            ]);
+        if ($request->password !== $this->adminPassword()) {
+            return response()->json([
+                'message' => 'Invalid credentials.',
+            ], 422);
         }
 
-        // Revoke all previous tokens for this user (single active session)
-        $user->tokens()->delete();
-
-        $token = $user->createToken('portfolio-admin')->plainTextToken;
-
-        return response()->json(['token' => $token]);
+        return response()->json([
+            'token' => $this->adminToken(),
+        ]);
     }
 
     /**
      * POST /api/auth/logout
-     * Revokes the current token.
+     * Stateless token flow: the client just discards its token.
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
-
         return response()->json(['message' => 'Logged out.']);
     }
 }

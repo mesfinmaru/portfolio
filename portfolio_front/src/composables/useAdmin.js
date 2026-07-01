@@ -52,7 +52,7 @@ export function useAdmin() {
         const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@portfolio.com', password })
+          body: JSON.stringify({ password })
         })
         if (!res.ok) throw new Error('Invalid credentials')
         const json = await res.json()

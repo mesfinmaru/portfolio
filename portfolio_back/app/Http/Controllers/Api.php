@@ -34,10 +34,10 @@ Route::get('/portfolio', [PortfolioController::class, 'index']);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 Route::post('/auth/login',  [AuthController::class, 'login']);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('portfolio.admin');
 
 // ── Protected admin routes ────────────────────────────────────────────────────
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('portfolio.admin')->group(function () {
 
     // Sections
     Route::put('/portfolio/hero',    [PortfolioController::class, 'updateHero']);
